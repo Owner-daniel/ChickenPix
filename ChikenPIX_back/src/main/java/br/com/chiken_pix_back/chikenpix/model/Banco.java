@@ -1,13 +1,14 @@
 package br.com.chiken_pix_back.chikenpix.model;
 
-import br.com.chiken_pix_back.chikenpix.enumerations.StatusTransacao;
-import br.com.chiken_pix_back.chikenpix.enumerations.TipoTransacao;
 import br.com.chiken_pix_back.chikenpix.exception.*;
 import br.com.chiken_pix_back.chikenpix.repository.ChavePixRepository;
 import br.com.chiken_pix_back.chikenpix.repository.ContaBancariaRepository;
 import br.com.chiken_pix_back.chikenpix.repository.TransacaoRepository;
 import br.com.chiken_pix_back.chikenpix.repository.UserRepository;
+
+
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -39,7 +40,12 @@ public class Banco {
                 .orElseThrow(() -> new IdNaoEncontradoException("Error: Usuario não encontrado"));
     }
 
-    public void addUsuario(Usuario usuario) {
+    public ContaBancaria getConta(String numeroConta) {
+        return contas.findById(numeroConta)
+                .orElseThrow(() -> new IdNaoEncontradoException("Error: Conta bancária não encontrada."));
+    }
+
+    private void addUsuario(Usuario usuario) {
         usuarios.save(usuario);
     }
 
@@ -50,17 +56,30 @@ public class Banco {
     }
 
     public void bloquearContaPorFraude(String numeroConta) {
-        ContaBancaria conta = contas.findById(numeroConta)
-                .orElseThrow(() -> new IdNaoEncontradoException("Conta bancária não encontrada."));
+        ContaBancaria conta = getConta(numeroConta);
         conta.bloquearPorSuspeitaDeFraude();
         contas.save(conta);
     }
 
     public void removerUsuario(String id) {
-        if (!usuarios.existsById(id)) {
-            throw new IdNaoEncontradoException("Error: Usuario não encontrado");
-        }
+        getUsuario(id);
         usuarios.deleteById(id);
+    }
+
+    @Transactional
+    public void contaCreditar(String numeroConta, BigDecimal valor) {
+        ContaBancaria conta = getConta(numeroConta);
+        conta.creditar(valor);
+    }
+
+    @Transactional(noRollbackFor = {
+            SenhaPixIncorretaException.class,
+            ContaBloqueadaSuspeitaFraudeException.class
+    })
+    public void contaDebitar(String numeroConta, BigDecimal valor, String senha) {
+        ContaBancaria conta = getConta(numeroConta);
+        conta.validarSenha(senha);
+        conta.debitar(valor);
     }
 
     public Usuario cadastrarUsuario(String nome, String email, String cpf, String senha, String cnpj, String telefone) {
@@ -110,7 +129,8 @@ public class Banco {
         transacoes.save(transacao);
     }
 
-    public void concluirTransacao(String id){
+    @Transactional
+    public void concluirTransacao(String id) {
         Transacao transacao = buscarTransacao(id);
 
         transacao.getOrigem().debitar(transacao.getValor());
@@ -132,13 +152,8 @@ public class Banco {
     }
 
 
-    public ContaBancaria consultarConta(String numeroConta) {
-        return contas.findById(numeroConta)
-                .orElseThrow(() -> new IdNaoEncontradoException("Conta não encontrada"));
-    }
-
     public List<Transacao> consultarNotificacoes(String numeroConta) {
-        consultarConta(numeroConta);
+        getConta(numeroConta);
         return transacoes.findByOrigem_NumeroContaOrDestino_NumeroContaOrderByDataHoraDesc(numeroConta, numeroConta);
     }
 
