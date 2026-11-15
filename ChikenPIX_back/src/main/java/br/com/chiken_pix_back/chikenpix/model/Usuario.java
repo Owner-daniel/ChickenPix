@@ -1,6 +1,6 @@
 package br.com.chiken_pix_back.chikenpix.model;
 
-import br.com.caelum.stella.tinytype.CPF;
+import br.com.chiken_pix_back.chikenpix.utils.GeradorConta;
 import br.com.chiken_pix_back.chikenpix.exception.*;
 
 import jakarta.persistence.*;
@@ -38,7 +38,7 @@ public class Usuario {
         this.email = email;
         this.cpf = cpf;
         this.senha = senha;
-        this.conta = new ContaBancaria(UUID.randomUUID().toString());
+        this.conta = new ContaBancaria(GeradorConta.gerarNumeroConta());
         this.conta.setUsuario(this); // Faz a conta saber que a conta criada pertence a esse usuario.
         this.cnpj = cnpj;
         this.telefone = telefone;
@@ -49,7 +49,7 @@ public class Usuario {
 
     public static void validarSenha(String valor) {
         if (valor == null || valor.isBlank() || !valor.trim().matches("^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@#$%^&+=!]).{8,}$")){
-                throw new SenhaInvalidaException("Error: Senha Inválida");
+                throw new SenhaInvalidaException("Error: Senha Inválida, a senha deve conter pelomenos uma letra maiuscula e algum simbolo especial");
         }
         //Nesse metodo primeiro verifica se a senha não está nula ou se o espaço está vazio ou cheio de espaços em branco,
         //depois eu uso a trim() pra retirar qualquer espaço que o usuário digite "sem querer" e uso p matches() para estabelecer o padrão da ssenha a ser definida
