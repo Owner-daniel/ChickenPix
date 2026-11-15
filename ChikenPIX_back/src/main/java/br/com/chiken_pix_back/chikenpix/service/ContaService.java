@@ -9,13 +9,12 @@ import java.math.BigDecimal;
 @Service
 public class ContaService {
     private Banco banco;
-
     public ContaService(Banco banco){
         this.banco = banco;
     }
 
     public BigDecimal consultarSaldo(String numeroConta){
-        ContaBancaria conta = banco.buscarConta(numeroConta);
+        ContaBancaria conta = banco.getConta(numeroConta);
         return conta.getSaldo();
     }
 }

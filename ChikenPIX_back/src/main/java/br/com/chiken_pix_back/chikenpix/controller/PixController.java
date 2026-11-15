@@ -20,11 +20,8 @@ public class PixController {
 
     @PostMapping
     public void realizarPix(@RequestBody PixRequest request) {
-
-        ContaBancaria origem = banco.consultarConta(request.getOrigem());
-
         pixService.realizarPix(
-                origem,
+                request.getOrigem(),
                 request.getChaveDestino(),
                 request.getValor(),
                 request.getSenha()
