@@ -146,7 +146,7 @@ public class ContaBancaria {
             }
 
             throw new SenhaPixIncorretaException(
-                    "Error: Senha incorreta. Tentativa " + this.errosSenha + " de 3. " + senhaCorreta + " " + senhaDigitada
+                    "Error: Senha incorreta. Tentativa " + this.errosSenha + " de 3."
             );
         }
 
