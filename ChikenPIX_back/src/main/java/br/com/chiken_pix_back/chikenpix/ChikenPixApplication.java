@@ -9,5 +9,4 @@ public class ChikenPixApplication {
     public static void main(String[] args) {
         SpringApplication.run(ChikenPixApplication.class, args);
     }
-
 }
