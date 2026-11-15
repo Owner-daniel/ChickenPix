@@ -14,11 +14,4 @@ public class BancoController {
         this.banco = banco;
     }
 
-    @PostMapping("/usuarios")
-    public String adicionarUsuario(@RequestBody Usuario usuario) {
-
-        banco.addUsuario(usuario);
-
-        return "Usuário adicionado com sucesso!";
-    }
 }
