@@ -28,6 +28,9 @@ public class ContaBancaria {
     @Column(name = "nome_banco")
     private String nomeBanco;
 
+    @Column(name = "erros_senha", nullable = false)
+    private int errosSenha = 0;
+
     @OneToOne
     @JoinColumn(name = "usuario_id", nullable = false, unique = true)
     @JsonBackReference
@@ -126,5 +129,27 @@ public class ContaBancaria {
 
     public void bloquearPorSuspeitaDeFraude() {
         this.status = StatusConta.BLOQUEADA_FRAUDE;
+    }
+
+    public void validarSenha(String senhaDigitada) {
+        String senhaCorreta = getUsuario().getSenha();
+
+        if (senhaDigitada == null || !senhaDigitada.equals(senhaCorreta)) {
+            this.errosSenha += 1;
+
+            if (this.errosSenha >= 3) {
+                bloquearPorSuspeitaDeFraude();
+                this.errosSenha = 0;
+                throw new ContaBloqueadaSuspeitaFraudeException(
+                        "Error: Conta bloqueada por suspeita de fraude devido a 3 tentativas de senha incorreta."
+                );
+            }
+
+            throw new SenhaPixIncorretaException(
+                    "Error: Senha incorreta. Tentativa " + this.errosSenha + " de 3. " + senhaCorreta + " " + senhaDigitada
+            );
+        }
+
+        this.errosSenha = 0;
     }
 }
