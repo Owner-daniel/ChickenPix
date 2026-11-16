@@ -110,17 +110,17 @@ public class Banco {
         return usuario;
     }
 
-    public ChavePix cadastrarChavePix(TipoChavePix tipo, String chave, String numConta){
-        if (tipo == null){
+    @Transactional
+    public ChavePix cadastrarChavePix(TipoChavePix tipo, String chave, String numConta) {
+        if (tipo == null) {
             throw new ChavePixInvalidaException("Tipo de Chave Pix inválida tente outro tipo.");
         }
         ContaBancaria conta = getConta(numConta);
-        ChavePix chavePix = new ChavePix(tipo, chave, conta);
-        conta.addChavePix(tipo, chave);
-        return chavePix;
+        return conta.addChavePix(tipo, chave);
     }
 
-    public TipoChavePix removerChavePix(TipoChavePix tipo, String numConta){
+    @Transactional
+    public TipoChavePix removerChavePix(TipoChavePix tipo, String numConta) {
         ContaBancaria conta = getConta(numConta);
         conta.rmChavePix(tipo);
         return tipo;
