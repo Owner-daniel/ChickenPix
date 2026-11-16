@@ -17,6 +17,13 @@ public class GlobalExceptionHandler {
                 .body(exception.getMessage());
     }
 
+    @ExceptionHandler(ChavePixInvalidaException.class)
+    public ResponseEntity<String> tratarChavePixInvalida(ChavePixInvalidaException exception) {
+        return ResponseEntity
+                .status(HttpStatus.NON_AUTHORITATIVE_INFORMATION)
+                .body(exception.getMessage());
+    }
+
     @ExceptionHandler(ValorPixInvalidoException.class)
     public ResponseEntity<String> tratarValorPixInvalido(ValorPixInvalidoException exception) {
         return ResponseEntity
