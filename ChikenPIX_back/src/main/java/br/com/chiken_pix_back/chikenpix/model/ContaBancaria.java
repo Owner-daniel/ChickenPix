@@ -134,6 +134,13 @@ public class ContaBancaria {
     }
 
     public void validarSenha(String senhaDigitada) {
+        if (this.status == StatusConta.DESATIVADA) {
+            throw new ContaDesativadaException("Error: Conta Desativada, operação falhou.");
+        }
+        if (this.status == StatusConta.BLOQUEADA_FRAUDE) {
+            throw new ContaBloqueadaSuspeitaFraudeException("Error: Conta bloqueada por suspeita de fraude. Operação não permitida.");
+        }
+
         String senhaCorreta = getUsuario().getSenha();
 
         if (senhaDigitada == null || !senhaDigitada.equals(senhaCorreta)) {
