@@ -90,15 +90,17 @@ public class ContaBancaria {
         this.saldo = this.saldo.add(valor);
     }
 
-    public void addChavePix(TipoChavePix tipoChave, String valorChave) {
+    public ChavePix addChavePix(TipoChavePix tipoChave, String valorChave) {
         if (tipoChave == TipoChavePix.ALEATORIA) {
-            throw new IllegalArgumentException("Use gerarChaveAleatoria() para chaves do tipo ALEATORIA.");
+           return gerarChaveAleatoria();
         }
         if (buscarChavePix(tipoChave) != null) {
             throw new ChavePixJaCadastradaException("Error: Chave Pix já cadastrada.");
         }
         ChavePixValidation.validar(tipoChave, valorChave);
-        chavesPix.add(new ChavePix(tipoChave, valorChave, this));
+        ChavePix novaChave = new ChavePix(tipoChave, valorChave, this);
+        chavesPix.add(novaChave);
+        return novaChave;
     }
 
     public ChavePix buscarChavePix(TipoChavePix tipoChave) {
