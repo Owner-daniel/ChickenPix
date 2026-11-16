@@ -1,5 +1,6 @@
 package br.com.chiken_pix_back.chikenpix.model;
 
+import br.com.chiken_pix_back.chikenpix.enumerations.TipoChavePix;
 import br.com.chiken_pix_back.chikenpix.exception.*;
 import br.com.chiken_pix_back.chikenpix.repository.ChavePixRepository;
 import br.com.chiken_pix_back.chikenpix.repository.ContaBancariaRepository;
@@ -107,6 +108,22 @@ public class Banco {
         Usuario usuario = new Usuario(nome, email, cpfValidado, senha, cnpjValidado, telefone);
         addUsuario(usuario);
         return usuario;
+    }
+
+    public ChavePix cadastrarChavePix(TipoChavePix tipo, String chave, String numConta){
+        if (tipo == null){
+            throw new ChavePixInvalidaException("Tipo de Chave Pix inválida tente outro tipo.");
+        }
+        ContaBancaria conta = getConta(numConta);
+        ChavePix chavePix = new ChavePix(tipo, chave, conta);
+        conta.addChavePix(tipo, chave);
+        return chavePix;
+    }
+
+    public TipoChavePix removerChavePix(TipoChavePix tipo, String numConta){
+        ContaBancaria conta = getConta(numConta);
+        conta.rmChavePix(tipo);
+        return tipo;
     }
 
     public void addTransacao(Transacao transacao){
