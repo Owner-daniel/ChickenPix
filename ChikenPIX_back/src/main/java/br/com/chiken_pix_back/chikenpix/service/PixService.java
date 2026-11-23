@@ -26,12 +26,25 @@ public class PixService {
             SenhaPixIncorretaException.class,
             ContaBloqueadaSuspeitaFraudeException.class
     })
-    public void realizarPix(
-            String numeroContaOrigem,
+    public Transacao realizarPix(
+            ContaBancaria origem,
             String chaveDestino,
             BigDecimal valor,
             String senha
     ) {
+        return realizarPix(origem != null ? origem.getNumeroConta() : null, chaveDestino, valor, senha);
+    }
+
+    @Transactional(noRollbackFor = {
+            SenhaPixIncorretaException.class,
+            ContaBloqueadaSuspeitaFraudeException.class
+    })
+    public Transacao realizarPix(
+            String numeroContaOrigem,
+            String chaveDestino,
+            BigDecimal valor,
+            String senha
+    ) { {
         ContaBancaria origem = banco.getConta(numeroContaOrigem);
 
         origem.validarSenha(senha);
@@ -50,13 +63,18 @@ public class PixService {
             );
         }
 
+        origem.debitar(valor);
+        destino.creditar(valor);
+
         Transacao transacao = new Transacao(
                 origem,
                 destino,
                 valor,
                 TipoTransacao.PIX_ENVIADO
         );
+        transacao.concluir();
 
         banco.addTransacao(transacao);
+        return transacao;
     }
 }
