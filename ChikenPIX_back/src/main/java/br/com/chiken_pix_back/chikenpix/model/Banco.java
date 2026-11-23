@@ -80,6 +80,19 @@ public class Banco {
     }
 
     @Transactional
+    public Usuario atualizarUsuario(String id, String nome, String email, String senha, String telefone) {
+        Usuario usuario = getUsuario(id);
+        usuario.atualizarNome(nome);
+        usuario.atualizarEmail(email);
+        usuario.atualizarSenha(senha);
+        if (telefone != null && !telefone.isBlank()) {
+            Usuario.validarTelefone(telefone);
+            usuario.setTelefone(telefone.trim());
+        }
+        return usuarios.save(usuario);
+    }
+
+    @Transactional
     public void contaCreditar(String numeroConta, BigDecimal valor) {
         ContaBancaria conta = getConta(numeroConta);
         conta.creditar(valor);

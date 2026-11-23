@@ -31,6 +31,15 @@ public class UsuarioController {
         return UsuarioLoginResponse.from(usuario);
     }
 
+    public record AtualizarUsuarioRequest(
+            String nome, String email, String senha, String telefone) {}
+
+    @PutMapping("/{id}")
+    public UsuarioLoginResponse atualizar(@PathVariable String id, @RequestBody AtualizarUsuarioRequest req) {
+        Usuario atualizado = banco.atualizarUsuario(id, req.nome(), req.email(), req.senha(), req.telefone());
+        return UsuarioLoginResponse.from(atualizado);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> remover(@PathVariable String id) {
         banco.removerUsuario(id);
