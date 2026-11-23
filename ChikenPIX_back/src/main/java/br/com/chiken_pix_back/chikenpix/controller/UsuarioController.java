@@ -1,5 +1,7 @@
 package br.com.chiken_pix_back.chikenpix.controller;
 
+import br.com.chiken_pix_back.chikenpix.DTO.FrontIntegrationDTOs.LoginRequest;
+import br.com.chiken_pix_back.chikenpix.DTO.FrontIntegrationDTOs.UsuarioLoginResponse;
 import br.com.chiken_pix_back.chikenpix.model.Banco;
 import br.com.chiken_pix_back.chikenpix.model.Usuario;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,12 @@ public class UsuarioController {
     @PostMapping
     public Usuario cadastrar(@RequestBody CadastrarUsuarioRequest req) {
         return banco.cadastrarUsuario(req.nome(), req.email(), req.cpf(), req.senha(), req.cnpj(), req.telefone());
+    }
+
+    @PostMapping("/login")
+    public UsuarioLoginResponse login(@RequestBody LoginRequest req) {
+        Usuario usuario = banco.autenticarUsuario(req.email(), req.senha());
+        return UsuarioLoginResponse.from(usuario);
     }
 
     @DeleteMapping("/{id}")
