@@ -1,6 +1,6 @@
 package br.com.chiken_pix_back.chikenpix.controller;
 
-import br.com.chiken_pix_back.chikenpix.model.Transacao;
+import br.com.chiken_pix_back.chikenpix.DTO.FrontIntegrationDTOs.NotificacaoTransacaoResponse;
 import br.com.chiken_pix_back.chikenpix.service.NotificacaoService;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,7 +17,10 @@ public class NotificacaoController {
     }
 
     @GetMapping("/{numeroConta}")
-    public List<Transacao> listar(@PathVariable String numeroConta) {
-        return notificacaoService.listarNotificacoes(numeroConta);
+    public List<NotificacaoTransacaoResponse> listar(@PathVariable String numeroConta) {
+        return notificacaoService.listarNotificacoes(numeroConta)
+                .stream()
+                .map(t -> NotificacaoTransacaoResponse.from(t, numeroConta))
+                .toList();
     }
 }

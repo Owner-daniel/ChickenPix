@@ -41,6 +41,18 @@ public class Banco {
                 .orElseThrow(() -> new IdNaoEncontradoException("Error: Usuario não encontrado"));
     }
 
+    public Usuario autenticarUsuario(String email, String senha) {
+        if (email == null || email.isBlank() || senha == null || senha.isBlank()) {
+            throw new SenhaPixIncorretaException("Error: E-mail ou senha inválidos");
+        }
+        Usuario usuario = usuarios.findByEmail(email.trim())
+                .orElseThrow(() -> new SenhaPixIncorretaException("Error: E-mail ou senha inválidos"));
+        if (!senha.equals(usuario.getSenha())) {
+            throw new SenhaPixIncorretaException("Error: E-mail ou senha inválidos");
+        }
+        return usuario;
+    }
+
     public ContaBancaria getConta(String numeroConta) {
         return contas.findById(numeroConta)
                 .orElseThrow(() -> new IdNaoEncontradoException("Error: Conta bancária não encontrada."));
@@ -65,6 +77,19 @@ public class Banco {
     public void removerUsuario(String id) {
         getUsuario(id);
         usuarios.deleteById(id);
+    }
+
+    @Transactional
+    public Usuario atualizarUsuario(String id, String nome, String email, String senha, String telefone) {
+        Usuario usuario = getUsuario(id);
+        usuario.atualizarNome(nome);
+        usuario.atualizarEmail(email);
+        usuario.atualizarSenha(senha);
+        if (telefone != null && !telefone.isBlank()) {
+            Usuario.validarTelefone(telefone);
+            usuario.setTelefone(telefone.trim());
+        }
+        return usuarios.save(usuario);
     }
 
     @Transactional
