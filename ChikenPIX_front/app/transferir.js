@@ -5,29 +5,19 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function Transferir() {
   const router = useRouter();
-  const [busca, setBusca] = useState('');
+  const params = useLocalSearchParams();
+  const origem = params?.origem ? String(params.origem).trim() : '';
 
-  // Dados locais simulados (sem necessidade de API)
-  const recentes = [
-    { id: '1', nome: 'Rainam', chave: 'rainam@pix.com' },
-    { id: '2', nome: 'David', chave: 'david@pix.com' },
-    { id: '3', nome: 'Diano', chave: 'diano@pix.com' },
-  ];
-
-  const todosContatos = [
-    { id: '1', nome: 'Rayn Gosling', inicial: 'RG', chave: 'rayn@pix.com' },
-    { id: '2', nome: 'Rayn Gosling', inicial: 'RG', chave: 'rayn2@pix.com' },
-    { id: '3', nome: 'Rayn Gosling', inicial: 'RG', chave: 'rayn3@pix.com' },
-  ];
+  const [chaveDestino, setChaveDestino] = useState('');
 
   const fecharTela = () => {
     if (router.canGoBack()) {
@@ -37,95 +27,55 @@ export default function Transferir() {
     }
   };
 
-  const selecionarContato = (contato) => {
+  const avancarComChave = () => {
+    const chaveLimpa = chaveDestino.trim();
+    if (!chaveLimpa) {
+      Alert.alert('Chave obrigatória', 'Informe a chave Pix de quem vai receber.');
+      return;
+    }
+
     router.push({
       pathname: '/valor-transferencia',
       params: {
-        destinatarioId: contato.id,
-        nome: contato.nome,
-        chave: contato.chave || busca,
+        ...params,
+        origem,
+        nome: chaveLimpa,
+        chave: chaveLimpa,
       },
     });
   };
 
-  // Filtra os contatos em tempo real conforme a pesquisa
-  const contatosFiltrados = todosContatos.filter((contato) =>
-    contato.nome.toLowerCase().includes(busca.toLowerCase()) ||
-    (contato.chave && contato.chave.toLowerCase().includes(busca.toLowerCase()))
-  );
-
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      <View style={styles.container}>
-        {/* Botão Fechar (X) */}
-        <TouchableOpacity style={styles.closeButton} onPress={fecharTela} activeOpacity={0.7}>
-          <Ionicons name="close" size={28} color="#2D2D2D" />
-        </TouchableOpacity>
+        <View style={styles.container}>
+          <TouchableOpacity style={styles.closeButton} onPress={fecharTela} activeOpacity={0.7}>
+            <Ionicons name="close" size={28} color="#2D2D2D" />
+          </TouchableOpacity>
 
-        {/* Título */}
-        <Text style={styles.title}>Para quem você quer transferir?</Text>
+          <Text style={styles.title}>Para quem você quer transferir?</Text>
 
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Campo de Busca */}
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Insira o dado de quem vai receber</Text>
+            <Text style={styles.inputLabel}>Insira a chave Pix de quem vai receber</Text>
             <TextInput
-              style={styles.input}
-              placeholder="Nome, telefone, CPF/CNPJ ou chave Pix"
-              placeholderTextColor="#A0A0A0"
-              value={busca}
-              onChangeText={setBusca}
-              onSubmitEditing={() => selecionarContato({ id: '0', nome: busca, chave: busca })}
-              returnKeyType="next"
+                style={styles.input}
+                placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória"
+                placeholderTextColor="#A0A0A0"
+                value={chaveDestino}
+                onChangeText={setChaveDestino}
+                onSubmitEditing={avancarComChave}
+                returnKeyType="next"
+                autoCapitalize="none"
+                autoCorrect={false}
             />
           </View>
 
-          {/* Seção: Você pagou recentemente */}
-          <View style={styles.secao}>
-            <Text style={styles.secaoTitulo}>Você pagou recentemente</Text>
-
-            <View style={styles.recentesRow}>
-              {recentes.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.recenteCard}
-                  onPress={() => selecionarContato(item)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.circuloRecente}>
-                    <Feather name="user" size={30} color="#000000" />
-                  </View>
-                  <Text style={styles.nomeRecente} numberOfLines={1}>{item.nome}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Seção: Todos os seus contatos */}
-          <View style={styles.secao}>
-            <Text style={styles.secaoTitulo}>Todos os seus contatos</Text>
-
-            {contatosFiltrados.map((item, index) => (
-              <TouchableOpacity
-                key={`${item.id}-${index}`}
-                style={styles.contatoRow}
-                onPress={() => selecionarContato(item)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.circuloContato}>
-                  <Text style={styles.inicialTexto}>
-                    {item.inicial || item.nome.substring(0, 2).toUpperCase()}
-                  </Text>
-                </View>
-                <Text style={styles.nomeContato}>{item.nome}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
-      </View>
-    </SafeAreaView>
+          <TouchableOpacity style={styles.btnContinuar} onPress={avancarComChave} activeOpacity={0.85}>
+            <Text style={styles.btnContinuarTexto}>Continuar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
   );
 }
 
@@ -167,63 +117,16 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E5E5E5',
     paddingVertical: 8,
   },
-  secao: {
-    marginBottom: 28,
-  },
-  secaoTitulo: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2D2D2D',
-    marginBottom: 16,
-  },
-  recentesRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    gap: 20,
-  },
-  recenteCard: {
-    alignItems: 'center',
-    width: 72,
-  },
-  circuloRecente: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: '#BCEBE3',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  nomeRecente: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000000',
-    textAlign: 'center',
-  },
-  contatoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  btnContinuar: {
+    backgroundColor: '#00A88F',
     paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  circuloContato: {
-    width: 48,
-    height: 48,
     borderRadius: 24,
-    backgroundColor: '#BCEBE3',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginTop: 8,
   },
-  inicialTexto: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000000',
-  },
-  nomeContato: {
+  btnContinuarTexto: {
+    color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '600',
-    color: '#000000',
+    fontWeight: 'bold',
   },
 });
