@@ -114,4 +114,24 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(exception.getMessage());
     }
+
+    @ExceptionHandler({
+            CNPJInvalidoException.class,
+            TelefoneInvalidoException.class,
+            SaldoNaoSuficienteException.class,
+            SaldoNaoZeradoException.class,
+            IllegalArgumentException.class
+    })
+    public ResponseEntity<String> tratarValidacoesGerais(RuntimeException exception) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(exception.getMessage());
+    }
+
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<String> tratarDuplicidadeBanco() {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body("Error: Registro duplicado (e-mail, CPF, CNPJ ou chave Pix já cadastrado).");
+    }
 }
