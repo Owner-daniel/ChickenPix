@@ -41,6 +41,18 @@ public class Banco {
                 .orElseThrow(() -> new IdNaoEncontradoException("Error: Usuario não encontrado"));
     }
 
+    public Usuario autenticarUsuario(String email, String senha) {
+        if (email == null || email.isBlank() || senha == null || senha.isBlank()) {
+            throw new SenhaPixIncorretaException("Error: E-mail ou senha inválidos");
+        }
+        Usuario usuario = usuarios.findByEmail(email.trim())
+                .orElseThrow(() -> new SenhaPixIncorretaException("Error: E-mail ou senha inválidos"));
+        if (!senha.equals(usuario.getSenha())) {
+            throw new SenhaPixIncorretaException("Error: E-mail ou senha inválidos");
+        }
+        return usuario;
+    }
+
     public ContaBancaria getConta(String numeroConta) {
         return contas.findById(numeroConta)
                 .orElseThrow(() -> new IdNaoEncontradoException("Error: Conta bancária não encontrada."));
