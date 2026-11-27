@@ -1,0 +1,215 @@
+package br.com.chiken_pix_back.chikenpix.model;
+
+import br.com.chiken_pix_back.chikenpix.enumerations.TipoChavePix;
+import br.com.chiken_pix_back.chikenpix.exception.*;
+import br.com.chiken_pix_back.chikenpix.repository.ChavePixRepository;
+import br.com.chiken_pix_back.chikenpix.repository.ContaBancariaRepository;
+import br.com.chiken_pix_back.chikenpix.repository.TransacaoRepository;
+import br.com.chiken_pix_back.chikenpix.repository.UserRepository;
+
+
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static br.com.chiken_pix_back.chikenpix.model.Usuario.validarCNPJ;
+import static br.com.chiken_pix_back.chikenpix.model.Usuario.validarCPF;
+
+@Component
+public class Banco {
+
+    private final UserRepository usuarios;
+    private final ContaBancariaRepository contas;
+    private final ChavePixRepository chaves;
+    private final TransacaoRepository transacoes;
+
+    public Banco(UserRepository usuarios,
+                 ContaBancariaRepository contas,
+                 ChavePixRepository chaves,
+                 TransacaoRepository transacoes) {
+        this.usuarios = usuarios;
+        this.contas = contas;
+        this.chaves = chaves;
+        this.transacoes = transacoes;
+    }
+
+    public Usuario getUsuario(String id) {
+        return usuarios.findById(id)
+                .orElseThrow(() -> new IdNaoEncontradoException("Error: Usuario não encontrado"));
+    }
+
+    public Usuario autenticarUsuario(String email, String senha) {
+        if (email == null || email.isBlank() || senha == null || senha.isBlank()) {
+            throw new SenhaPixIncorretaException("Error: E-mail ou senha inválidos");
+        }
+        Usuario usuario = usuarios.findByEmail(email.trim())
+                .orElseThrow(() -> new SenhaPixIncorretaException("Error: E-mail ou senha inválidos"));
+        if (!senha.equals(usuario.getSenha())) {
+            throw new SenhaPixIncorretaException("Error: E-mail ou senha inválidos");
+        }
+        return usuario;
+    }
+
+    public ContaBancaria getConta(String numeroConta) {
+        return contas.findById(numeroConta)
+                .orElseThrow(() -> new IdNaoEncontradoException("Error: Conta bancária não encontrada."));
+    }
+
+    private void addUsuario(Usuario usuario) {
+        usuarios.save(usuario);
+    }
+
+    public ContaBancaria buscarConta(String chave) {
+        return chaves.findByChave(chave)
+                .map(ChavePix::getContaBancaria)
+                .orElse(null);
+    }
+
+    public void bloquearContaPorFraude(String numeroConta) {
+        ContaBancaria conta = getConta(numeroConta);
+        conta.bloquearPorSuspeitaDeFraude();
+        contas.save(conta);
+    }
+
+    public void removerUsuario(String id) {
+        getUsuario(id);
+        usuarios.deleteById(id);
+    }
+
+    @Transactional
+    public Usuario atualizarUsuario(String id, String nome, String email, String senha, String telefone) {
+        Usuario usuario = getUsuario(id);
+        usuario.atualizarNome(nome);
+        usuario.atualizarEmail(email);
+        usuario.atualizarSenha(senha);
+        if (telefone != null && !telefone.isBlank()) {
+            Usuario.validarTelefone(telefone);
+            usuario.setTelefone(telefone.trim());
+        }
+        return usuarios.save(usuario);
+    }
+
+    @Transactional
+    public void contaCreditar(String numeroConta, BigDecimal valor) {
+        ContaBancaria conta = getConta(numeroConta);
+        conta.creditar(valor);
+    }
+
+    @Transactional(noRollbackFor = {
+            SenhaPixIncorretaException.class,
+            ContaBloqueadaSuspeitaFraudeException.class
+    })
+    public void contaDebitar(String numeroConta, BigDecimal valor, String senha) {
+        ContaBancaria conta = getConta(numeroConta);
+        conta.validarSenha(senha);
+        conta.debitar(valor);
+    }
+
+    public Usuario cadastrarUsuario(String nome, String email, String cpf, String senha, String cnpj, String telefone) {
+        Usuario.validarNome(nome);
+        Usuario.validarEmail(email);
+        Usuario.validarSenha(senha);
+
+        String cpfValidado = null;
+        String cnpjValidado = null;
+
+        if (cpf != null && !cpf.isBlank() && cnpj != null && !cnpj.isBlank()) {
+            throw new CPFInvalidoException("Erro: Você não pode preencher CPF e CNPJ ao mesmo tempo.");
+        }
+        if ((cpf == null || cpf.isBlank()) && (cnpj == null || cnpj.isBlank())) {
+            throw new CPFInvalidoException("Erro: É necessário informar o CPF ou o CNPJ.");
+        }
+        if (cpf != null && !cpf.isBlank()) {
+            validarCPF(cpf);
+            cpfValidado = cpf.trim();
+        } else {
+            validarCNPJ(cnpj);
+            cnpjValidado = cnpj.trim();
+        }
+
+        Usuario usuario = new Usuario(nome, email, cpfValidado, senha, cnpjValidado, telefone);
+        addUsuario(usuario);
+        return usuario;
+    }
+
+    @Transactional
+    public ChavePix cadastrarChavePix(TipoChavePix tipo, String chave, String numConta) {
+        if (tipo == null) {
+            throw new ChavePixInvalidaException("Tipo de Chave Pix inválida tente outro tipo.");
+        }
+        ContaBancaria conta = getConta(numConta);
+        return conta.addChavePix(tipo, chave);
+    }
+
+    @Transactional
+    public TipoChavePix removerChavePix(TipoChavePix tipo, String numConta) {
+        ContaBancaria conta = getConta(numConta);
+        conta.rmChavePix(tipo);
+        return tipo;
+    }
+
+    public void addTransacao(Transacao transacao){
+        transacoes.save(transacao);
+    }
+
+    public Transacao buscarTransacao(String id) {
+        return transacoes.findById(id)
+                .orElseThrow(() ->
+                        new IdNaoEncontradoException(
+                                "Transação não encontrada"
+                        ));
+    }
+
+    public void cancelarTransacao(String id) {
+        Transacao transacao = buscarTransacao(id);
+
+        transacao.cancelar();
+
+        transacoes.save(transacao);
+    }
+
+    @Transactional
+    public void concluirTransacao(String id) {
+        Transacao transacao = buscarTransacao(id);
+
+        transacao.getOrigem().debitar(transacao.getValor());
+        transacao.getDestino().creditar(transacao.getValor());
+
+        transacao.concluir();
+        transacoes.save(transacao);
+    }
+
+    public List<Transacao> listarTransacoes() {
+        return transacoes.findAll();
+    }
+
+    public List<Transacao> filtrarTransacoesPorData(LocalDateTime inicio, LocalDateTime fim) {
+        if (inicio.isAfter(fim)) {
+            throw new IllegalArgumentException("Data inicial não pode ser depois da data final.");
+        }
+        return transacoes.findByDataHoraBetween(inicio, fim);
+    }
+
+
+    public List<Transacao> consultarNotificacoes(String numeroConta) {
+        getConta(numeroConta);
+        return transacoes.findByOrigem_NumeroContaOrDestino_NumeroContaOrderByDataHoraDesc(numeroConta, numeroConta);
+    }
+
+    public List<Transacao> gerarRelatorioPorUsuario(ContaBancaria conta) {
+        if (conta == null) {
+            throw new IllegalArgumentException("Error: Conta não pode ser nula.");
+        }
+        return transacoes.findByOrigemOrDestinoOrderByDataHoraDesc(conta, conta);
+    }
+  
+    public List<Transacao> gerarRelatorioPorPeriodo(ContaBancaria conta, LocalDateTime inicio, LocalDateTime fim) {
+        if (conta == null || inicio == null || fim == null) {
+            throw new IllegalArgumentException("Error: Parâmetros de busca por período não podem ser nulos.");
+        }
+        return transacoes.findByOrigemOrDestinoAndDataHoraBetween(conta, conta, inicio, fim);
+    }
+}

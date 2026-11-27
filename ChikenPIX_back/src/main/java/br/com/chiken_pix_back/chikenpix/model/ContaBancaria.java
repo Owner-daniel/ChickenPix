@@ -1,0 +1,164 @@
+package br.com.chiken_pix_back.chikenpix.model;
+
+import br.com.chiken_pix_back.chikenpix.enumerations.StatusConta;
+import br.com.chiken_pix_back.chikenpix.enumerations.TipoChavePix;
+import br.com.chiken_pix_back.chikenpix.exception.*;
+import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Getter
+@Entity
+@Table(name = "contas_bancarias")
+public class ContaBancaria {
+
+    @Column(name = "numero_agencia")
+    private String numeroAgencia;
+
+    @Column(name = "codigo_banco")
+    private String codigoBanco;
+
+    @Column(name = "nome_banco")
+    private String nomeBanco;
+
+    @Column(name = "erros_senha", nullable = false)
+    private int errosSenha = 0;
+
+    @OneToOne
+    @JoinColumn(name = "usuario_id", nullable = false, unique = true)
+    @JsonBackReference
+    private @Setter Usuario usuario;
+
+    @Id
+    private String numeroConta;
+
+    @Column(precision = 15, scale = 2)
+    private BigDecimal saldo;
+
+    @Enumerated(EnumType.STRING)
+    private StatusConta status;
+
+    @OneToMany(mappedBy = "contaBancaria", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChavePix> chavesPix = new ArrayList<>();
+
+    protected ContaBancaria() {}
+
+    public ContaBancaria(String numeroConta) {
+        this.numeroConta = numeroConta;
+        this.numeroAgencia = "0001001";
+        this.codigoBanco = "D022NSJZ02012";
+        this.nomeBanco = "ChikenPIX";
+        this.saldo = BigDecimal.ZERO;
+        this.status = StatusConta.ATIVA;
+    }
+
+    public void encerrarConta() {
+        if (this.saldo.compareTo(BigDecimal.ZERO) != 0) {
+            throw new SaldoNaoZeradoException("Erro ao encerrar conta: seu saldo não está zerado!");
+        }
+        this.status = StatusConta.DESATIVADA;
+    }
+
+    public void debitar(BigDecimal valor) {
+        if (this.status == StatusConta.DESATIVADA) {
+            throw new ContaDesativadaException("Error: Conta Desativada, operação falhou.");
+        }
+        if (this.status == StatusConta.BLOQUEADA_FRAUDE) {
+            throw new ContaBloqueadaSuspeitaFraudeException("Error: Conta bloqueada por suspeita de fraude. Operação não permitida.");
+        }
+        if (this.saldo.compareTo(valor) < 0) {
+            throw new SaldoInsuficienteException("Error: Saldo insuficiente para realizar Pix.");
+        }
+        this.saldo = this.saldo.subtract(valor);
+    }
+
+    public void creditar(BigDecimal valor) {
+        if (this.status == StatusConta.DESATIVADA) {
+            throw new ContaDesativadaException("Error: Conta Desativada, operação falhou.");
+        }
+
+        if (this.status == StatusConta.BLOQUEADA_FRAUDE) {
+            throw new ContaBloqueadaSuspeitaFraudeException("Error: Conta bloqueada por suspeita de fraude. Operação não permitida.");
+        }
+        this.saldo = this.saldo.add(valor);
+    }
+
+    public ChavePix addChavePix(TipoChavePix tipoChave, String valorChave) {
+        if (tipoChave == TipoChavePix.ALEATORIA) {
+           return gerarChaveAleatoria();
+        }
+        if (buscarChavePix(tipoChave) != null) {
+            throw new ChavePixJaCadastradaException("Error: Chave Pix já cadastrada.");
+        }
+        ChavePixValidation.validar(tipoChave, valorChave);
+        ChavePix novaChave = new ChavePix(tipoChave, valorChave, this);
+        chavesPix.add(novaChave);
+        return novaChave;
+    }
+
+    public ChavePix buscarChavePix(TipoChavePix tipoChave) {
+        return chavesPix.stream()
+                .filter(c -> c.getTipoChave() == tipoChave)
+                .findFirst()
+                .orElse(null);
+    }
+
+    public ChavePix rmChavePix(TipoChavePix tipoChave) {
+        ChavePix rmChave = buscarChavePix(tipoChave);
+        if (rmChave == null) {
+            throw new ChaveNaoEncontradaException("Error: Chave Pix não encontrada.");
+        }
+        chavesPix.remove(rmChave);
+        return rmChave;
+    }
+
+    public ChavePix gerarChaveAleatoria() {
+        if (buscarChavePix(TipoChavePix.ALEATORIA) != null) {
+            throw new ChavePixJaCadastradaException("Esta conta já possui uma chave aleatória.");
+        }
+        String chaveGerada = UUID.randomUUID().toString();
+        ChavePix novaChave = new ChavePix(TipoChavePix.ALEATORIA, chaveGerada, this);
+        chavesPix.add(novaChave);
+        return novaChave;
+    }
+
+    public void bloquearPorSuspeitaDeFraude() {
+        this.status = StatusConta.BLOQUEADA_FRAUDE;
+    }
+
+    public void validarSenha(String senhaDigitada) {
+        if (this.status == StatusConta.DESATIVADA) {
+            throw new ContaDesativadaException("Error: Conta Desativada, operação falhou.");
+        }
+        if (this.status == StatusConta.BLOQUEADA_FRAUDE) {
+            throw new ContaBloqueadaSuspeitaFraudeException("Error: Conta bloqueada por suspeita de fraude. Operação não permitida.");
+        }
+
+        String senhaCorreta = getUsuario().getSenha();
+
+        if (senhaDigitada == null || !senhaDigitada.equals(senhaCorreta)) {
+            this.errosSenha += 1;
+
+            if (this.errosSenha >= 3) {
+                bloquearPorSuspeitaDeFraude();
+                this.errosSenha = 0;
+                throw new ContaBloqueadaSuspeitaFraudeException(
+                        "Error: Conta bloqueada por suspeita de fraude devido a 3 tentativas de senha incorreta."
+                );
+            }
+
+            throw new SenhaPixIncorretaException(
+                    "Error: Senha incorreta. Tentativa " + this.errosSenha + " de 3."
+            );
+        }
+
+        this.errosSenha = 0;
+    }
+}
