@@ -1,0 +1,3 @@
+ALTER TABLE contas_bancarias
+    ADD COLUMN limite_diario NUMERIC(15, 2) NOT NULL DEFAULT 5000.00,
+    ADD COLUMN usado_hoje NUMERIC(15, 2) NOT NULL DEFAULT 0.00;

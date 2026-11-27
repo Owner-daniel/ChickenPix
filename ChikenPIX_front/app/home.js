@@ -1,5 +1,13 @@
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, StatusBar, ScrollView, RefreshControl, Text, View } from 'react-native';
+import {
+    StyleSheet,
+    StatusBar,
+    ScrollView,
+    RefreshControl,
+    Text,
+    View,
+    TouchableOpacity,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
@@ -67,6 +75,7 @@ export default function Home() {
 
     const nomeUsuario = conta?.usuario?.nome || 'Conta';
     const saldoFormatado = conta ? formatarSaldo(conta.saldo) : 'R$ 0,00';
+    const numeroContaParaRota = conta?.numeroConta || numeroContaAtiva;
 
     return (
         <SafeAreaView style={styles.container}>
@@ -106,26 +115,39 @@ export default function Home() {
                     onPix={() =>
                         router.push({
                             pathname: '/transferir',
-                            params: { origem: conta?.numeroConta || numeroContaAtiva },
+                            params: { origem: numeroContaParaRota },
                         })
                     }
                     onCofre={() =>
                         router.push({
                             pathname: '/limite-diario',
-                            params: { numeroConta: conta?.numeroConta || numeroContaAtiva },
+                            params: { numeroConta: numeroContaParaRota },
                         })
                     }
                     onChaves={() =>
                         router.push({
                             pathname: '/chave',
-                            params: { numConta: conta?.numeroConta || numeroContaAtiva },
+                            params: { numConta: numeroContaParaRota },
                         })
                     }
                 />
 
+                <TouchableOpacity
+                    style={styles.linkExtrato}
+                    onPress={() =>
+                        router.push({
+                            pathname: '/extrato',
+                            params: { numeroConta: numeroContaParaRota },
+                        })
+                    }
+                    activeOpacity={0.7}
+                >
+                    <Text style={styles.linkExtratoTexto}>Ver extrato completo  ›</Text>
+                </TouchableOpacity>
+
                 <HistoricoTransferencia
                     transacoes={transacoes}
-                    numeroConta={conta?.numeroConta || numeroContaAtiva}
+                    numeroConta={numeroContaParaRota}
                     loading={loading}
                     error={erroTransacoes}
                 />
@@ -141,7 +163,7 @@ export default function Home() {
                 usuario={{
                     nome: nomeUsuario,
                     agencia: conta?.numeroAgencia || '',
-                    conta: conta?.numeroConta || numeroContaAtiva,
+                    conta: numeroContaParaRota,
                 }}
             />
         </SafeAreaView>
@@ -167,5 +189,16 @@ const styles = StyleSheet.create({
         color: '#000000',
         fontSize: 13,
         fontWeight: '600',
+    },
+    linkExtrato: {
+        marginHorizontal: 20,
+        marginTop: 4,
+        paddingVertical: 12,
+        alignItems: 'center',
+    },
+    linkExtratoTexto: {
+        color: '#00A88F',
+        fontSize: 15,
+        fontWeight: '700',
     },
 });

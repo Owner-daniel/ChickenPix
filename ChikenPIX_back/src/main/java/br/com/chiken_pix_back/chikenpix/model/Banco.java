@@ -7,7 +7,6 @@ import br.com.chiken_pix_back.chikenpix.repository.ContaBancariaRepository;
 import br.com.chiken_pix_back.chikenpix.repository.TransacaoRepository;
 import br.com.chiken_pix_back.chikenpix.repository.UserRepository;
 
-
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -108,6 +107,13 @@ public class Banco {
         conta.debitar(valor);
     }
 
+    @Transactional
+    public ContaBancaria alterarLimiteDiario(String numeroConta, BigDecimal novoLimite) {
+        ContaBancaria conta = getConta(numeroConta);
+        conta.alterarLimiteDiario(novoLimite);
+        return contas.save(conta);
+    }
+
     public Usuario cadastrarUsuario(String nome, String email, String cpf, String senha, String cnpj, String telefone) {
         Usuario.validarNome(nome);
         Usuario.validarEmail(email);
@@ -141,6 +147,10 @@ public class Banco {
             throw new ChavePixInvalidaException("Tipo de Chave Pix inválida tente outro tipo.");
         }
         ContaBancaria conta = getConta(numConta);
+
+        if (tipo != TipoChavePix.ALEATORIA && chaves.findByChave(chave).isPresent()) {
+            throw new ChavePixJaCadastradaException("Error: Chave Pix já cadastrada em outra conta.");
+        }
         return conta.addChavePix(tipo, chave);
     }
 
@@ -151,7 +161,7 @@ public class Banco {
         return tipo;
     }
 
-    public void addTransacao(Transacao transacao){
+    public void addTransacao(Transacao transacao) {
         transacoes.save(transacao);
     }
 
@@ -193,7 +203,6 @@ public class Banco {
         return transacoes.findByDataHoraBetween(inicio, fim);
     }
 
-
     public List<Transacao> consultarNotificacoes(String numeroConta) {
         getConta(numeroConta);
         return transacoes.findByOrigem_NumeroContaOrDestino_NumeroContaOrderByDataHoraDesc(numeroConta, numeroConta);
@@ -205,7 +214,7 @@ public class Banco {
         }
         return transacoes.findByOrigemOrDestinoOrderByDataHoraDesc(conta, conta);
     }
-  
+
     public List<Transacao> gerarRelatorioPorPeriodo(ContaBancaria conta, LocalDateTime inicio, LocalDateTime fim) {
         if (conta == null || inicio == null || fim == null) {
             throw new IllegalArgumentException("Error: Parâmetros de busca por período não podem ser nulos.");

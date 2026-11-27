@@ -15,7 +15,7 @@ public class ChavePixController {
 
     private final Banco banco;
 
-    public ChavePixController(Banco banco){
+    public ChavePixController(Banco banco) {
         this.banco = banco;
     }
 
@@ -28,7 +28,7 @@ public class ChavePixController {
     }
 
     @PostMapping("/cadastrar")
-    public void cadastrarChavePix(@RequestBody CadastroChavePixRequest req){
+    public void cadastrarChavePix(@RequestBody CadastroChavePixRequest req) {
         if (req.getTipo() == null) {
             throw new IllegalArgumentException("O tipo da chave Pix é obrigatório.");
         }
@@ -41,11 +41,12 @@ public class ChavePixController {
             case "aleatoria" -> TipoChavePix.ALEATORIA;
             default -> throw new IllegalArgumentException("Tipo de chave Pix inválido: " + req.getTipo());
         };
+
         banco.cadastrarChavePix(tipo, req.getChave(), req.getNumConta());
     }
 
     @DeleteMapping("/remover")
-    public void cadastrarChavePix(@RequestBody RemoverChavePixRequest req){
-            banco.removerChavePix(req.getTipo(), req.getNumConta());
+    public void removerChavePix(@RequestBody RemoverChavePixRequest req) {
+        banco.removerChavePix(req.getTipo(), req.getNumConta());
     }
 }

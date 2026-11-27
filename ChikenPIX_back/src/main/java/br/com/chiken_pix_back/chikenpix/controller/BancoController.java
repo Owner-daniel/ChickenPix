@@ -5,7 +5,7 @@ import br.com.chiken_pix_back.chikenpix.model.Usuario;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/banco")
+@RequestMapping("/contas")
 public class BancoController {
 
     private final Banco banco;
@@ -14,4 +14,8 @@ public class BancoController {
         this.banco = banco;
     }
 
+    @GetMapping("/{numeroConta}")
+    public FrontIntegrationDTOs.ContaResponse buscarConta(@PathVariable String numeroConta) {
+        return FrontIntegrationDTOs.ContaResponse.from(banco.getConta(numeroConta));
+    }
 }
