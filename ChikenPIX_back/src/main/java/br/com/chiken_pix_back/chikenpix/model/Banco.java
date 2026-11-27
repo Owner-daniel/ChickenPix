@@ -124,6 +124,13 @@ public class Banco {
         this.usadoHoje = novoTotal;
     }
 
+    @Transactional
+    public ContaBancaria definirLimiteDiario(String numeroConta, BigDecimal novoLimite) {
+        ContaBancaria conta = getConta(numeroConta);
+        conta.alterarLimiteDiario(novoLimite);
+        return contas.save(conta);
+    }
+
     public Usuario cadastrarUsuario(String nome, String email, String cpf, String senha, String cnpj, String telefone) {
         Usuario.validarNome(nome);
         Usuario.validarEmail(email);
