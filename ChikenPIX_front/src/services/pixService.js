@@ -29,3 +29,14 @@ export function concluirTransacao(id) {
         method: 'PATCH',
     });
 }
+
+export function buscarLimite(numeroConta) {
+    return apiRequest(`/contas/${encodeURIComponent(numeroConta)}/limite`);
+}
+
+export function alterarLimite(numeroConta, limiteDiario) {
+    return apiRequest(`/contas/${encodeURIComponent(numeroConta)}/limite`, {
+        method: 'PUT',
+        body: JSON.stringify({ limiteDiario }),
+    });
+}

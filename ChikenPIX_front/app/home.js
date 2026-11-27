@@ -109,7 +109,12 @@ export default function Home() {
                             params: { origem: conta?.numeroConta || numeroContaAtiva },
                         })
                     }
-                    onCofre={() => {}}
+                    onCofre={() =>
+                        router.push({
+                            pathname: '/limite-diario',
+                            params: { numeroConta: conta?.numeroConta || numeroContaAtiva },
+                        })
+                    }
                     onChaves={() =>
                         router.push({
                             pathname: '/chave',
