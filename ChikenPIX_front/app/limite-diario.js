@@ -79,6 +79,11 @@ export default function LimiteDiario() {
     const novoValor = digitos ? Number(digitos) / 100 : null;
 
     const handleSalvar = async () => {
+        if (!numeroConta) {
+            Alert.alert('Erro', 'Conta não identificada. Volte à tela inicial e abra o limite novamente.');
+            return;
+        }
+
         if (novoValor === null) {
             Alert.alert('Atenção', 'Informe um valor para o novo limite.');
             return;

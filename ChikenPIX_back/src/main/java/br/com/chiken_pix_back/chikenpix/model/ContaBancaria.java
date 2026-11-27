@@ -19,6 +19,9 @@ import java.util.UUID;
 @Table(name = "contas_bancarias")
 public class ContaBancaria {
 
+    public static final BigDecimal LIMITE_MINIMO = new BigDecimal("100.00");
+    public static final BigDecimal LIMITE_MAXIMO = new BigDecimal("50000.00");
+
     @Column(name = "numero_agencia")
     private String numeroAgencia;
 
@@ -30,6 +33,12 @@ public class ContaBancaria {
 
     @Column(name = "erros_senha", nullable = false)
     private int errosSenha = 0;
+
+    @Column(name = "limite_diario", precision = 15, scale = 2, nullable = false)
+    private BigDecimal limiteDiario = new BigDecimal("5000.00");
+
+    @Column(name = "usado_hoje", precision = 15, scale = 2, nullable = false)
+    private BigDecimal usadoHoje = BigDecimal.ZERO;
 
     @OneToOne
     @JoinColumn(name = "usuario_id", nullable = false, unique = true)
@@ -64,6 +73,15 @@ public class ContaBancaria {
             throw new SaldoNaoZeradoException("Erro ao encerrar conta: seu saldo não está zerado!");
         }
         this.status = StatusConta.DESATIVADA;
+    }
+
+    public void alterarLimiteDiario(BigDecimal novoLimite) {
+        if (novoLimite == null
+                || novoLimite.compareTo(LIMITE_MINIMO) < 0
+                || novoLimite.compareTo(LIMITE_MAXIMO) > 0) {
+            throw new IllegalArgumentException("O limite deve estar entre R$ 100,00 e R$ 50.000,00.");
+        }
+        this.limiteDiario = novoLimite;
     }
 
     public void debitar(BigDecimal valor) {
