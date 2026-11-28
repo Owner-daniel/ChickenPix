@@ -1,5 +1,6 @@
+
 export const API_BASE_URL =
-    process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.110:8081';
+    process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8081';
 
 export async function apiRequest(path, options = {}) {
     const response = await fetch(`${API_BASE_URL}${path}`, {

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
     View,
@@ -15,17 +16,19 @@ import { Ionicons } from '@expo/vector-icons';
 import Logo from './logo';
 import BotaoCircular from './botaoCircular';
 
-
 export default function TelaFluxo({
                                       titulo,
                                       icone = 'chevron-back',
                                       onVoltar,
                                       iconeBotao = 'arrow-forward',
                                       onContinuar,
+                                      onAvancar,
                                       botaoDesabilitado = false,
                                       carregando = false,
                                       children,
                                   }) {
+    const aoAvancar = onContinuar || onAvancar;
+
     return (
         <SafeAreaView style={styles.safeArea}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -62,7 +65,7 @@ export default function TelaFluxo({
                 <View style={styles.rodape}>
                     <BotaoCircular
                         icone={iconeBotao}
-                        onPress={onContinuar}
+                        onPress={aoAvancar}
                         desabilitado={botaoDesabilitado}
                         carregando={carregando}
                     />

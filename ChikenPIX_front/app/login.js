@@ -1,19 +1,29 @@
+
 import React, { useState } from 'react';
+import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import TelaFluxo from '../src/components/telaFluxo';
 import CampoTexto from '../src/components/campoTexto';
 import LinkVerde from '../src/components/linkVerde';
+import { fazerLogin } from '../src/services/authService';
+import { useSessao } from '../src/context/SessaoContext';
 import { validarEmail } from '../src/utils/validacoes';
 
 export default function Login() {
     const router = useRouter();
+    const { iniciarSessao } = useSessao();
+
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
     const [erroEmail, setErroEmail] = useState('');
     const [erroSenha, setErroSenha] = useState('');
+    const [carregando, setCarregando] = useState(false);
 
-    function entrar() {
-        const msgEmail = validarEmail(email);
+    async function entrar() {
+        if (carregando) return;
+
+        const emailLimpo = email.trim();
+        const msgEmail = validarEmail(emailLimpo);
         if (msgEmail) {
             setErroEmail(msgEmail);
             return;
@@ -23,15 +33,33 @@ export default function Login() {
             return;
         }
 
-        // TODO(back): integrar com POST /usuarios/login quando o endpoint existir
-        console.log('Login validado localmente para:', email);
-        router.replace('/');
+        setCarregando(true);
+        try {
+            const usuarioLogado = await fazerLogin({ email: emailLimpo, senha });
+            iniciarSessao(usuarioLogado);
+
+            const numeroConta = usuarioLogado?.conta?.numeroConta || '';
+            setSenha('');
+
+            router.replace({
+                pathname: '/home',
+                params: numeroConta ? { numeroConta } : {},
+            });
+        } catch (error) {
+            Alert.alert(
+                'Falha no login',
+                error?.message || 'Não foi possível entrar. Verifique e-mail e senha.'
+            );
+        } finally {
+            setCarregando(false);
+        }
     }
 
     return (
         <TelaFluxo
             titulo="Bem vindo de volta!"
             onAvancar={entrar}
+            carregando={carregando}
         >
             <CampoTexto
                 placeholder="Digite o seu e-mail"

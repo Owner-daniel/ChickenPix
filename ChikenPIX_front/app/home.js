@@ -18,6 +18,7 @@ import HistoricoTransferencia from '../src/components/HistoricoTransferencia';
 import BotaoPix from '../src/components/BotaoPix';
 import PerfilModal from '../src/components/PerfilModal';
 import { buscarConta, buscarNotificacoes } from '../src/services/pixService';
+import { useSessao } from '../src/context/SessaoContext';
 
 function formatarSaldo(valor) {
     const num = Number(valor ?? 0);
@@ -27,10 +28,22 @@ function formatarSaldo(valor) {
     });
 }
 
+function obterPrimeiroNome(nomeCompleto) {
+    if (!nomeCompleto || typeof nomeCompleto !== 'string') {
+        return 'Conta';
+    }
+    const partes = nomeCompleto.trim().split(/\s+/);
+    return partes[0] || 'Conta';
+}
+
 export default function Home() {
     const router = useRouter();
     const params = useLocalSearchParams();
-    const numeroContaAtiva = params?.numeroConta ? String(params.numeroConta) : '';
+    const { sessao } = useSessao();
+
+    const numeroContaAtiva =
+        (params?.numeroConta ? String(params.numeroConta) : '') ||
+        String(sessao?.conta?.numeroConta || sessao?.numeroConta || '');
 
     const [perfilVisible, setPerfilVisible] = useState(false);
     const [conta, setConta] = useState(null);
@@ -73,7 +86,14 @@ export default function Home() {
         }, [carregarDados])
     );
 
-    const nomeUsuario = conta?.usuario?.nome || 'Conta';
+    const nomeCompletoUsuario =
+        sessao?.nome ||
+        sessao?.usuario?.nome ||
+        conta?.usuario?.nome ||
+        conta?.nomeTitular ||
+        'Conta';
+
+    const primeiroNomeUsuario = obterPrimeiroNome(nomeCompletoUsuario);
     const saldoFormatado = conta ? formatarSaldo(conta.saldo) : 'R$ 0,00';
     const numeroContaParaRota = conta?.numeroConta || numeroContaAtiva;
 
@@ -95,7 +115,7 @@ export default function Home() {
                 }
             >
                 <Header
-                    nome={nomeUsuario}
+                    nome={primeiroNomeUsuario}
                     onPressPerfil={() => setPerfilVisible(true)}
                     onPressMenu={() => setPerfilVisible(true)}
                 />
@@ -161,7 +181,7 @@ export default function Home() {
                 visible={perfilVisible}
                 onClose={() => setPerfilVisible(false)}
                 usuario={{
-                    nome: nomeUsuario,
+                    nome: nomeCompletoUsuario,
                     agencia: conta?.numeroAgencia || '',
                     conta: numeroContaParaRota,
                 }}

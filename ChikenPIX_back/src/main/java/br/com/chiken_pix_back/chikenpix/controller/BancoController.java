@@ -2,8 +2,8 @@ package br.com.chiken_pix_back.chikenpix.controller;
 
 import br.com.chiken_pix_back.chikenpix.DTO.FrontIntegrationDTOs;
 import br.com.chiken_pix_back.chikenpix.model.Banco;
-import br.com.chiken_pix_back.chikenpix.model.Usuario;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/contas")
@@ -13,10 +13,5 @@ public class BancoController {
 
     public BancoController(Banco banco) {
         this.banco = banco;
-    }
-
-    @GetMapping("/{numeroConta}")
-    public FrontIntegrationDTOs.ContaResponse buscarConta(@PathVariable String numeroConta) {
-        return FrontIntegrationDTOs.ContaResponse.from(banco.getConta(numeroConta));
     }
 }
