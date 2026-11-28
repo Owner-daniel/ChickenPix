@@ -24,6 +24,8 @@ public class Banco {
     private final ContaBancariaRepository contas;
     private final ChavePixRepository chaves;
     private final TransacaoRepository transacoes;
+    private BigDecimal usadoHoje;
+    private BigDecimal limiteDiario;
 
     public Banco(UserRepository usuarios,
                  ContaBancariaRepository contas,
@@ -109,6 +111,21 @@ public class Banco {
 
     @Transactional
     public ContaBancaria alterarLimiteDiario(String numeroConta, BigDecimal novoLimite) {
+        ContaBancaria conta = getConta(numeroConta);
+        conta.alterarLimiteDiario(novoLimite);
+        return contas.save(conta);
+    }
+
+    public void registrarUsoLimiteDiario(BigDecimal valor) {
+        BigDecimal novoTotal = this.usadoHoje.add(valor);
+        if (novoTotal.compareTo(this.limiteDiario) > 0) {
+            throw new IllegalArgumentException("Error: Valor excede o limite diário de transações.");
+        }
+        this.usadoHoje = novoTotal;
+    }
+
+    @Transactional
+    public ContaBancaria definirLimiteDiario(String numeroConta, BigDecimal novoLimite) {
         ContaBancaria conta = getConta(numeroConta);
         conta.alterarLimiteDiario(novoLimite);
         return contas.save(conta);

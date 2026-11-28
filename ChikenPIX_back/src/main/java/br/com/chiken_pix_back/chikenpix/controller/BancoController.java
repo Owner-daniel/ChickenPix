@@ -1,5 +1,6 @@
 package br.com.chiken_pix_back.chikenpix.controller;
 
+import br.com.chiken_pix_back.chikenpix.DTO.FrontIntegrationDTOs;
 import br.com.chiken_pix_back.chikenpix.model.Banco;
 import br.com.chiken_pix_back.chikenpix.model.Usuario;
 import org.springframework.web.bind.annotation.*;
