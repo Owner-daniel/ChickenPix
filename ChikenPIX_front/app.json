@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon-galinha.png",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/images/icon-galinha.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#00A896"
-    },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#00A896",
