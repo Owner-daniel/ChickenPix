@@ -1,3 +1,4 @@
+/*
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080';
 
 export async function fazerLogin({ email, senha }) {
@@ -16,4 +17,20 @@ export async function fazerLogin({ email, senha }) {
     }
 
     return data;
+}*/
+
+import { apiRequest } from './api';
+
+export function cadastrarUsuario(payload) {
+    return apiRequest('/usuarios', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}
+
+export function fazerLogin({ email, senha }) {
+    return apiRequest('/usuarios/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, senha }),
+    });
 }
